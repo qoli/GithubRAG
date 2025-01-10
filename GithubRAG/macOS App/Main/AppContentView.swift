@@ -17,7 +17,7 @@ struct AppContentView: View {
             FolderListView()
 
             // 默認 View
-            Text("Select an item")
+            WelcomeView()
         }
     }
 }
