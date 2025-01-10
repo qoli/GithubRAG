@@ -12,8 +12,6 @@ import SwiftGit2
 import SwiftUI
 
 class RAGHelper: ObservableObject {
-    let ragSystem: RAGSystem = RAGSystem()
-
     let INITIAL_PROMPT = """
        You are a git commit message generator.
        Your task is to help the user write a good commit message.
@@ -38,12 +36,9 @@ class RAGHelper: ObservableObject {
     """
 
     var workingDirectory: String = ""
-    func update(workingDirectory: String) {
+    func reset(workingDirectory: String) {
+        print(#function, workingDirectory)
         self.workingDirectory = workingDirectory
-
-        guard FileManager.default.fileExists(atPath: workingDirectory) else {
-            fatalError("Working directory does not exist at path: \(workingDirectory)")
-        }
 
         git_libgit2_init()
     }
@@ -52,8 +47,15 @@ class RAGHelper: ObservableObject {
         git_libgit2_shutdown()
     }
 
-    @Published var documents: [Document] = []
+    @Published var documents: [RagDocument] = []
     @Published var response: String = "..."
+
+    struct RagDocument: Identifiable {
+        var id: UUID
+        var statusEntry: StatusEntry
+        var document: Document
+        var check: Bool = true
+    }
 
     func requestAccess(completionHandler: @escaping (URL?) -> Void) {
         let gitRepository = URL(fileURLWithPath: workingDirectory)
@@ -62,7 +64,7 @@ class RAGHelper: ObservableObject {
         if !gotAccess {
             print("Could not access repository: \(gitRepository), requestAccessToFolder ...")
 
-            requestAccessToFolder { newURL in
+            requestAccessToFolder(filePath: workingDirectory) { newURL in
                 if let url = newURL {
                     completionHandler(url)
                 }
@@ -73,81 +75,213 @@ class RAGHelper: ObservableObject {
         }
     }
 
-    func callGPT() {
+    func diff() {
         requestAccess { git in
 
             guard let git else { return }
 
-            let result = Repository.at(git)
-            switch result {
-            case let .success(repo):
-                let latestCommit = repo
-                    .HEAD()
-                    .flatMap {
-                        repo.commit($0.oid)
-                    }
+            do {
+                self.documents.removeAll()
 
-                switch latestCommit {
-                case let .success(commit):
-                    print("Latest Commit: \(commit.message) by \(commit.author.name)")
+                let repo = try Repository.at(git).get()
+                let statusEntry = try repo.status().get()
 
-                case let .failure(error):
-                    print("Could not get commit: \(error)")
+                statusEntry.forEach { statusEntry in
+                    let doc = self.buildDocument(statusEntry: statusEntry, repo: repo)
+
+                    let new = RagDocument(
+                        id: UUID(),
+                        statusEntry: statusEntry,
+                        document: doc
+                    )
+
+                    self.documents.append(new)
                 }
 
-            case let .failure(error):
-                print("Could not open repository: \(error)")
+            } catch {
+                print(error)
             }
         }
     }
 
-    func ragCommand(_ command: String, workingDirectory: String? = nil) -> Document? {
-        let content = runCommand(command, workingDirectory: workingDirectory)
+    func query() {
+        let ragSystem: RAGSystem = RAGSystem()
 
-        if let output = content.1 {
-            return Document(id: command, content: "\(content.0), \(output)")
+        let content = documents.filter({ $0.check == true }).map({ $0.document.content }).joined(separator: "\n")
+
+        // Get the app's document directory
+        if let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let timestamp = ISO8601DateFormatter().string(from: Date())
+            
+            // Create content file
+            let contentURL = documentDirectory.appendingPathComponent("content_\(timestamp).txt")
+            try? content.write(to: contentURL, atomically: true, encoding: .utf8)
+            print("Content saved to: \(contentURL.path)")
+
+            // Add document to RAG system
+            ragSystem.addDocument(Document(id: "git dff", content: content))
+
+            // Generate and save response
+            let query = INITIAL_PROMPT
+            let response = ragSystem.generateResponse(for: "\(query)")
+            
+            // Create response file
+            let responseURL = documentDirectory.appendingPathComponent("response_\(timestamp).txt")
+            try? response.write(to: responseURL, atomically: true, encoding: .utf8)
+            print("Response saved to: \(responseURL.path)")
+
+            self.response = response
         }
-
-        return nil
     }
 
-    func ragFile(path: String, ragSystem: RAGSystem) {
+    func test() {
+        let ragSystem: RAGSystem = RAGSystem()
+        let response = ragSystem.generateResponse(for: "hi")
+        print("Commit: \(response)")
+        self.response = response
+    }
+}
+
+extension RAGHelper {
+    func buildDocument(statusEntry: StatusEntry, repo: Repository) -> Document {
+        var context: String = ""
+
+        if let pathA = statusEntry.indexToWorkDir?.oldFile?.path, let pathB = statusEntry.indexToWorkDir?.newFile?.path {
+            context += "diff --git a/\(pathA) b/\(pathB)\n"
+        } else if let pathB = statusEntry.indexToWorkDir?.newFile?.path {
+            context += "New File: \(pathB)\n"
+        }
+
+        context += "Status: \(statusEntry.status)\n"
+
+        // Get the file paths
+        if let indexToWorkDir = statusEntry.indexToWorkDir {
+            context += "Flags: \(indexToWorkDir.flags)\n"
+
+            var oldContext: String = ""
+            var newContext: String = ""
+
+            if statusEntry.status == .workTreeModified {
+                if let oldFile = indexToWorkDir.oldFile {
+                    if let blob = try? repo.blob(oldFile.oid).get(), let thisContext = String(data: blob.data, encoding: .utf8) {
+                        oldContext = thisContext
+                    }
+                }
+            }
+
+            if let newFile = indexToWorkDir.newFile {
+                newContext = getNewFileContext(newFile: newFile, repo: repo)
+
+                if statusEntry.status == .workTreeModified {
+                    let diff = findLineDifferences(between: oldContext, and: newContext)
+                    context += diff
+                } else {
+                    context += newContext
+                }
+            }
+
+            return Document(id: statusEntry.id.uuidString, content: context)
+        }
+
+        return Document(id: statusEntry.id.uuidString, content: context)
+    }
+
+    // Added new function to get new file context
+    private func getNewFileContext(newFile: Diff.File, repo: Repository) -> String {
+        // Try to get content from repo blob first
+        if let blob = try? repo.blob(newFile.oid).get(),
+           let thisContext = String(data: blob.data, encoding: .utf8) {
+            return thisContext
+        }
+
+        // For new files that haven't been committed yet, read directly from the filesystem
+        let fileURL = URL(fileURLWithPath: workingDirectory).appendingPathComponent(newFile.path)
+        // Start accessing the security-scoped resource
+        let gotAccess = fileURL.startAccessingSecurityScopedResource()
+        defer {
+            if gotAccess {
+                fileURL.stopAccessingSecurityScopedResource()
+            }
+        }
+
         do {
-            // 读取文件内容
-            let content = try String(contentsOfFile: path, encoding: .utf8)
-            ragSystem.addDocument(Document(id: path, content: content))
+            return try String(contentsOf: fileURL, encoding: .utf8)
         } catch {
-            print("无法读取 README.md 文件: \(error)")
+            print("Error reading file: \(error)")
+            return "" // Set empty string if file can't be read
         }
     }
 
-    func runCommand(_ command: String, workingDirectory: String? = nil) -> (String, String?) {
-        let process = Process()
-        process.launchPath = "/bin/zsh" // 使用 zsh 作为 shell
-        process.arguments = ["-c", command] // 使用 -c 选项执行命令
-
-        if let directory = workingDirectory {
-            // Add directory check before setting working directory
-            guard FileManager.default.fileExists(atPath: directory) else {
-                print("Error: Working directory does not exist at path: \(directory)")
-                return (command, nil)
+    func findLineDifferences(between originalText: String, and modifiedText: String) -> String {
+        let originalLines = originalText.components(separatedBy: .newlines)
+        let modifiedText = modifiedText.replacingOccurrences(of: "\r\n", with: "\n")
+        let modifiedLines = modifiedText.components(separatedBy: .newlines)
+        var output = ""
+        
+        // Add file headers
+        output += "--- a\n"
+        output += "+++ b\n"
+        
+        // Find different chunks
+        var i = 0
+        let contextLines = 3
+        
+        while i < max(originalLines.count, modifiedLines.count) {
+            var diffStart = i
+            var diffLength = 0
+            var foundDiff = false
+            
+            // Look for differences
+            while i < min(originalLines.count, modifiedLines.count) {
+                if originalLines[i] != modifiedLines[i] {
+                    if !foundDiff {
+                        diffStart = max(0, i - contextLines)
+                        foundDiff = true
+                    }
+                    diffLength = (i - diffStart) + 1
+                } else if foundDiff {
+                    // Include context lines after diff
+                    diffLength += 1
+                    if diffLength >= contextLines {
+                        break
+                    }
+                }
+                i += 1
             }
-            process.currentDirectoryPath = directory // 设置工作目录
+            
+            // If we found differences, output the chunk
+            if foundDiff {
+                let chunkEnd = min(diffStart + diffLength + contextLines, originalLines.count)
+                let originalCount = chunkEnd - diffStart
+                let modifiedCount = chunkEnd - diffStart
+                
+                // Add chunk header
+                output += "@@ -\(diffStart + 1),\(originalCount) +\(diffStart + 1),\(modifiedCount) @@\n"
+                
+                // Output lines with context
+                for j in diffStart..<chunkEnd {
+                    if j < originalLines.count && j < modifiedLines.count {
+                        if originalLines[j] != modifiedLines[j] {
+                            output += "- \(originalLines[j])\n"
+                            output += "+ \(modifiedLines[j])\n"
+                        } else {
+                            output += " \(originalLines[j])\n"
+                        }
+                    } else if j < originalLines.count {
+                        output += "- \(originalLines[j])\n"
+                    } else if j < modifiedLines.count {
+                        output += "+ \(modifiedLines[j])\n"
+                    }
+                }
+                
+                i = chunkEnd
+            } else {
+                i += 1
+            }
         }
-
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-
-        process.launch()
-
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-
-        if let output = String(data: data, encoding: .utf8) {
-            return (command, output)
-        }
-
-        return (command, nil)
+        
+        return output
     }
+
+    // Rest of the extension remains the same
 }

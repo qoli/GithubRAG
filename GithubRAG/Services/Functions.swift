@@ -15,16 +15,22 @@ let itemFormatter: DateFormatter = {
     return formatter
 }()
 
-func requestAccessToFolder(completion: @escaping (URL?) -> Void) {
+func requestAccessToFolder(filePath: String, completion: @escaping (URL?) -> Void) {
     let openPanel = NSOpenPanel()
     openPanel.canChooseFiles = false
     openPanel.canChooseDirectories = true
     openPanel.allowsMultipleSelection = false
     openPanel.prompt = "Select Folder"
 
+    print(#function, URL(fileURLWithPath: filePath))
+
+    openPanel.directoryURL = URL(fileURLWithPath: filePath)
+    openPanel.representedURL = URL(fileURLWithPath: filePath)
+
     openPanel.begin { result in
         if result == .OK, let url = openPanel.url {
-            url.startAccessingSecurityScopedResource()
+            let startAccessingSecurityScopedResource = url.startAccessingSecurityScopedResource()
+            print("startAccessingSecurityScopedResource:", startAccessingSecurityScopedResource)
             completion(url)
         } else {
             completion(nil)

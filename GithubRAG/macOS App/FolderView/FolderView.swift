@@ -5,14 +5,16 @@
 //  Created by 黃佁媛 on 2025/1/10.
 //
 
+import CodeEditor
 import SwiftUI
 
 struct FolderView: View {
     @State var item: Item
 
     @StateObject private var rag = RAGHelper()
-
     @Environment(\.managedObjectContext) private var viewContext
+
+    @State var someCode: String = ""
 
     var body: some View {
         NavigationLink {
@@ -22,30 +24,63 @@ struct FolderView: View {
                 VStack(alignment: .leading) {
                     if item.folderURL != nil {
                         HStack {
-                            Button("Call RAG") {
-                                callRAG()
+                            Button("reset") {
+                                reset()
                             }
-                        }
 
-                        Text(rag.documents.count.description)
+                            Button("diff") {
+                                rag.diff()
+                            }
+
+                            Button("query") {
+                                rag.query()
+                            }
+
+                            Button("test") {
+                                rag.test()
+                            }
+
+                            Button("Select All") {
+                                rag.documents = rag.documents.map { doc in
+                                    var modifiedDoc = doc
+                                    modifiedDoc.check = true
+                                    return modifiedDoc
+                                }
+                            }
+
+                            Button("unSelect All") {
+                                rag.documents = rag.documents.map { doc in
+                                    var modifiedDoc = doc
+                                    modifiedDoc.check = false
+                                    return modifiedDoc
+                                }
+                            }
+
+                            Spacer()
+
+                            Text(rag.documents.filter({ $0.check }).count.description)
+                        }
 
                         HStack {
-                            Text(rag.response)
-
-                            Button(action: {
-                                let pasteboard = NSPasteboard.general
-                                pasteboard.clearContents()
-                                pasteboard.setString(rag.response, forType: .string)
-                            }) {
-                                Image(systemName: "doc.on.doc")
-                                    .foregroundColor(.blue)
-                            }
-                            .buttonStyle(.plain)
-                            .help("Copy to clipboard")
+                            CopyTextView(copyableText: $rag.response)
                         }
 
-                        List(rag.documents) { document in
-                            Text(document.content)
+                        HStack {
+                            List(rag.documents) { doc in
+                                let url = URL(filePath: doc.statusEntry.indexToWorkDir?.newFile?.path ?? "")
+
+                                if let index = rag.documents.firstIndex(where: { $0.id == doc.id }) {
+                                    Toggle(isOn: $rag.documents[index].check) {
+                                        Text(url.lastPathComponent)
+                                    }
+
+                                    ListButton(text: url.absoluteString) {
+                                        someCode = doc.document.content
+                                    }
+                                }
+                            }
+
+                            CodeEditor(source: $someCode, language: .swift, theme: .atelierSavannaDark)
                         }
                     }
                 }
@@ -65,16 +100,14 @@ struct FolderView: View {
         } label: {
             Label(item.folderName, systemImage: "folder")
         }
-        .onAppear {
-            guard let folderURL = item.folderURL else { return }
-            rag.update(workingDirectory: folderURL)
-        }
     }
 
-    func callRAG() {
-        rag.callGPT()
-//        documents = rag.documents
-//        ragReply =
+    func reset() {
+        guard let folderURL = item.folderURL else {
+            print("No folder URL")
+            return
+        }
+        rag.reset(workingDirectory: folderURL)
     }
 
     private func deleteItem() {

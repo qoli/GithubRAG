@@ -8,10 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		EA696A2D2D31476D0036113A /* SwiftGit2 in Frameworks */ = {isa = PBXBuildFile; productRef = EA696A2C2D31476D0036113A /* SwiftGit2 */; };
+		EA696A372D31A13B0036113A /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EA696A362D31A13B0036113A /* Info.plist */; };
+		EA696A432D31A9380036113A /* CodeEditor in Frameworks */ = {isa = PBXBuildFile; productRef = EA696A422D31A9380036113A /* CodeEditor */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		EA3EEC8A2D312B780009D47D /* GithubRAG.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GithubRAG.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EA696A362D31A13B0036113A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -28,6 +31,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EA696A2D2D31476D0036113A /* SwiftGit2 in Frameworks */,
+				EA696A432D31A9380036113A /* CodeEditor in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -37,6 +41,7 @@
 		EA3EEC812D312B780009D47D = {
 			isa = PBXGroup;
 			children = (
+				EA696A362D31A13B0036113A /* Info.plist */,
 				EA3EEC8C2D312B780009D47D /* GithubRAG */,
 				EA3EEC8B2D312B780009D47D /* Products */,
 			);
@@ -71,6 +76,7 @@
 			name = GithubRAG;
 			packageProductDependencies = (
 				EA696A2C2D31476D0036113A /* SwiftGit2 */,
+				EA696A422D31A9380036113A /* CodeEditor */,
 			);
 			productName = GithubRAG;
 			productReference = EA3EEC8A2D312B780009D47D /* GithubRAG.app */;
@@ -102,6 +108,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				EA696A2B2D31476D0036113A /* XCRemoteSwiftPackageReference "SwiftGit2" */,
+				EA696A412D31A9380036113A /* XCRemoteSwiftPackageReference "CodeEditor" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EA3EEC8B2D312B780009D47D /* Products */;
@@ -118,6 +125,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EA696A372D31A13B0036113A /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -266,6 +274,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -294,6 +303,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -340,6 +350,14 @@
 				kind = branch;
 			};
 		};
+		EA696A412D31A9380036113A /* XCRemoteSwiftPackageReference "CodeEditor" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ZeeZide/CodeEditor.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.6;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -347,6 +365,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = EA696A2B2D31476D0036113A /* XCRemoteSwiftPackageReference "SwiftGit2" */;
 			productName = SwiftGit2;
+		};
+		EA696A422D31A9380036113A /* CodeEditor */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EA696A412D31A9380036113A /* XCRemoteSwiftPackageReference "CodeEditor" */;
+			productName = CodeEditor;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -20,6 +20,10 @@ class RAGSystem {
     private var documents: [Document] = []
     private let embeddingModel: NLEmbedding
 
+    func reset() {
+        documents.removeAll()
+    }
+
     init() {
         guard let model = NLEmbedding.wordEmbedding(for: .english) else {
             fatalError("Unable to load embedding model")
@@ -35,7 +39,7 @@ class RAGSystem {
         documents.append(document)
     }
 
-    func searchRelevantDocuments(for query: String, limit: Int = 3) -> [Document] {
+    func searchRelevantDocuments(for query: String, limit: Int = 50) -> [Document] {
         let queryEmbedding = getEmbedding(for: query)
         let sortedDocuments = documents.sorted { doc1, doc2 in
             guard let emb1 = doc1.embedding, let emb2 = doc2.embedding else { return false }
@@ -59,7 +63,7 @@ class RAGSystem {
     }
 
     private func callOllama(with prompt: String) -> String {
-        let ollamaURL = URL(string: "http://localhost:11434/api/generate")!
+        let ollamaURL = URL(string: "http://127.0.0.1:11434/api/generate")!
         var request = URLRequest(url: ollamaURL)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -126,45 +130,3 @@ class RAGSystem {
         return dotProduct / (magnitude1 * magnitude2)
     }
 }
-
-// let INITIAL_PROMPT = """
-//    You are a git commit message generator.
-//    Your task is to help the user write a good commit message.
-//
-//    You will receive a summary of git log as first message from the user,
-//    a summary of git diff as the second message from the user
-//    and an optional hint for the commit message as the third message of the user.
-//
-//    Take the whole conversation in consideration and suggest a good commit message.
-//    Never say anything that is not your proposed commit message, never appologize.
-//
-//    - Use imperative
-//    - One line only
-//    - Be clear and concise
-//    - Follow standard commit message conventions
-//    - Do not put message in quotes
-//    - Put the most important changes first
-//    - Focus on the intent of the change, not just the code change. WHY, not how.
-//    - Avoid using "refactor" or "update" as they are too vague
-//
-//    Always provide only the commit message as answer.
-// """
-//
-//
-////let workingDirectory = "/Users/ronnie/Github/KSPlayer"
-//
-//// Example usage
-// let ragSystem = RAGSystem()
-//
-// if runCommand("git diff", workingDirectory: workingDirectory).1 != "" {
-//    ragCommand("git diff", workingDirectory: workingDirectory)
-//    ragCommand("git status", workingDirectory: workingDirectory)
-//
-//    // Generating a response
-//    let query = INITIAL_PROMPT
-//    let response = ragSystem.generateResponse(for: query)
-//
-//    print("Commit: \(response)")
-// } else {
-//    print("git diff is empty")
-// }
