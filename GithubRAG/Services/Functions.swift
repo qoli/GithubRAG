@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 let itemFormatter: DateFormatter = {
     let formatter = DateFormatter()
@@ -13,3 +14,20 @@ let itemFormatter: DateFormatter = {
     formatter.timeStyle = .medium
     return formatter
 }()
+
+func requestAccessToFolder(completion: @escaping (URL?) -> Void) {
+    let openPanel = NSOpenPanel()
+    openPanel.canChooseFiles = false
+    openPanel.canChooseDirectories = true
+    openPanel.allowsMultipleSelection = false
+    openPanel.prompt = "Select Folder"
+
+    openPanel.begin { result in
+        if result == .OK, let url = openPanel.url {
+            url.startAccessingSecurityScopedResource()
+            completion(url)
+        } else {
+            completion(nil)
+        }
+    }
+}

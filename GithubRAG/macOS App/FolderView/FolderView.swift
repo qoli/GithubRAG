@@ -9,7 +9,8 @@ import SwiftUI
 
 struct FolderView: View {
     @State var item: Item
-    @State var ragReply: String = ""
+
+    @StateObject private var rag = RAGHelper()
 
     @Environment(\.managedObjectContext) private var viewContext
 
@@ -26,23 +27,25 @@ struct FolderView: View {
                             }
                         }
 
-                        if ragReply != "" {
-                            HStack {
-                                Text(ragReply)
+                        Text(rag.documents.count.description)
 
-                                Button(action: {
-                                    let pasteboard = NSPasteboard.general
-                                    pasteboard.clearContents()
-                                    pasteboard.setString(ragReply, forType: .string)
-                                }) {
-                                    Image(systemName: "doc.on.doc")
-                                        .foregroundColor(.blue)
-                                }
-                                .buttonStyle(.plain)
-                                .help("Copy to clipboard")
+                        HStack {
+                            Text(rag.response)
+
+                            Button(action: {
+                                let pasteboard = NSPasteboard.general
+                                pasteboard.clearContents()
+                                pasteboard.setString(rag.response, forType: .string)
+                            }) {
+                                Image(systemName: "doc.on.doc")
+                                    .foregroundColor(.blue)
                             }
-                        } else {
-                            Text("...")
+                            .buttonStyle(.plain)
+                            .help("Copy to clipboard")
+                        }
+
+                        List(rag.documents) { document in
+                            Text(document.content)
                         }
                     }
                 }
@@ -58,15 +61,20 @@ struct FolderView: View {
                     })
                 }
             }
+
         } label: {
             Label(item.folderName, systemImage: "folder")
+        }
+        .onAppear {
+            guard let folderURL = item.folderURL else { return }
+            rag.update(workingDirectory: folderURL)
         }
     }
 
     func callRAG() {
-        guard let folderURL = item.folderURL else { return }
-        let rag = RAGHelper(workingDirectory: folderURL)
-        ragReply = rag.callGPT()
+        rag.callGPT()
+//        documents = rag.documents
+//        ragReply =
     }
 
     private func deleteItem() {

@@ -5,12 +5,14 @@
 //  Created by 黃佁媛 on 2025/1/10.
 //
 
+import Clibgit2
 import Foundation
 import NaturalLanguage
+import SwiftGit2
+import SwiftUI
 
-class RAGHelper {
-    let ragSystem: RAGSystem
-    let workingDirectory: String
+class RAGHelper: ObservableObject {
+    let ragSystem: RAGSystem = RAGSystem()
 
     let INITIAL_PROMPT = """
        You are a git commit message generator.
@@ -35,44 +37,78 @@ class RAGHelper {
        Always provide only the commit message as answer.
     """
 
-    init(workingDirectory: String) {
-        ragSystem = RAGSystem()
-
-        var workingDirectory = workingDirectory
-
-        if workingDirectory.starts(with: "file://") {
-            workingDirectory = workingDirectory.replacingOccurrences(of: "file://", with: "")
-        }
-
+    var workingDirectory: String = ""
+    func update(workingDirectory: String) {
         self.workingDirectory = workingDirectory
 
-        // Add directory existence check
         guard FileManager.default.fileExists(atPath: workingDirectory) else {
             fatalError("Working directory does not exist at path: \(workingDirectory)")
         }
+
+        git_libgit2_init()
     }
 
-    func callGPT() -> String {
-        if runCommand("git diff", workingDirectory: workingDirectory).1 != "" {
-            ragCommand("git diff", workingDirectory: workingDirectory)
-            ragCommand("git status", workingDirectory: workingDirectory)
+    deinit {
+        git_libgit2_shutdown()
+    }
 
-            // Generating a response
-            let query = INITIAL_PROMPT
-            let response = ragSystem.generateResponse(for: query)
+    @Published var documents: [Document] = []
+    @Published var response: String = "..."
 
-            return response
+    func requestAccess(completionHandler: @escaping (URL?) -> Void) {
+        let gitRepository = URL(fileURLWithPath: workingDirectory)
+
+        let gotAccess = gitRepository.startAccessingSecurityScopedResource()
+        if !gotAccess {
+            print("Could not access repository: \(gitRepository), requestAccessToFolder ...")
+
+            requestAccessToFolder { newURL in
+                if let url = newURL {
+                    completionHandler(url)
+                }
+            }
         } else {
-            return "git diff is empty"
+            print("access granted \(gitRepository)")
+            completionHandler(gitRepository)
         }
     }
 
-    func ragCommand(_ command: String, workingDirectory: String? = nil) {
+    func callGPT() {
+        requestAccess { git in
+
+            guard let git else { return }
+
+            let result = Repository.at(git)
+            switch result {
+            case let .success(repo):
+                let latestCommit = repo
+                    .HEAD()
+                    .flatMap {
+                        repo.commit($0.oid)
+                    }
+
+                switch latestCommit {
+                case let .success(commit):
+                    print("Latest Commit: \(commit.message) by \(commit.author.name)")
+
+                case let .failure(error):
+                    print("Could not get commit: \(error)")
+                }
+
+            case let .failure(error):
+                print("Could not open repository: \(error)")
+            }
+        }
+    }
+
+    func ragCommand(_ command: String, workingDirectory: String? = nil) -> Document? {
         let content = runCommand(command, workingDirectory: workingDirectory)
 
         if let output = content.1 {
-            ragSystem.addDocument(Document(id: command, content: "\(content.0), \(output)"))
+            return Document(id: command, content: "\(content.0), \(output)")
         }
+
+        return nil
     }
 
     func ragFile(path: String, ragSystem: RAGSystem) {
@@ -84,9 +120,7 @@ class RAGHelper {
             print("无法读取 README.md 文件: \(error)")
         }
     }
-}
 
-extension RAGHelper {
     func runCommand(_ command: String, workingDirectory: String? = nil) -> (String, String?) {
         let process = Process()
         process.launchPath = "/bin/zsh" // 使用 zsh 作为 shell

@@ -1,0 +1,15 @@
+{
+  "originHash" : "4e0f7ed3f05ff0c5d887917b4df97f00f478694e5028ff9e23b6761177f29d61",
+  "pins" : [
+    {
+      "identity" : "swiftgit2",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mbernson/SwiftGit2.git",
+      "state" : {
+        "branch" : "swift-package-manager",
+        "revision" : "ed7767625e889e608b0fb0ed45b0ab1114026d0a"
+      }
+    }
+  ],
+  "version" : 3
+}

@@ -46,7 +46,10 @@ struct FolderListView: View {
             switch result {
             case let .success(urls):
                 if let selectedURL = urls.first {
-                    saveItem(folderURL: selectedURL)
+                    let gotAccess = selectedURL.startAccessingSecurityScopedResource()
+                    if !gotAccess { return }
+
+                    saveItem(folderURL: selectedURL.absoluteString)
                 }
             case let .failure(error):
                 print("Error selecting folder: \(error.localizedDescription)")
@@ -58,18 +61,18 @@ struct FolderListView: View {
         isShowingFolderPicker = true
     }
 
-    private func saveItem(folderURL: URL) {
+    private func saveItem(folderURL: String) {
         withAnimation {
-            print("Selected folder: \(folderURL.path)")
+            print("Selected folder: \(folderURL)")
             let newItem = Item(context: viewContext)
             newItem.timestamp = Date()
-            newItem.folderURL = folderURL.absoluteString
+            newItem.folderURL = folderURL
 
             do {
                 try viewContext.save()
             } catch {
                 let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+                print("Unresolved error \(nsError), \(nsError.userInfo)")
             }
         }
     }

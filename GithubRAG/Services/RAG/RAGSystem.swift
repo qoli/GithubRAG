@@ -1,7 +1,11 @@
 import Foundation
 import NaturalLanguage
 
-class Document {
+class Document: Equatable, Identifiable {
+    static func == (lhs: Document, rhs: Document) -> Bool {
+        lhs.id == rhs.id
+    }
+
     let id: String
     let content: String
     var embedding: [Double]?
@@ -123,11 +127,7 @@ class RAGSystem {
     }
 }
 
-
-
-
-
-//let INITIAL_PROMPT = """
+// let INITIAL_PROMPT = """
 //    You are a git commit message generator.
 //    Your task is to help the user write a good commit message.
 //
@@ -148,15 +148,15 @@ class RAGSystem {
 //    - Avoid using "refactor" or "update" as they are too vague
 //
 //    Always provide only the commit message as answer.
-//"""
+// """
 //
 //
 ////let workingDirectory = "/Users/ronnie/Github/KSPlayer"
 //
 //// Example usage
-//let ragSystem = RAGSystem()
+// let ragSystem = RAGSystem()
 //
-//if runCommand("git diff", workingDirectory: workingDirectory).1 != "" {
+// if runCommand("git diff", workingDirectory: workingDirectory).1 != "" {
 //    ragCommand("git diff", workingDirectory: workingDirectory)
 //    ragCommand("git status", workingDirectory: workingDirectory)
 //
@@ -165,6 +165,6 @@ class RAGSystem {
 //    let response = ragSystem.generateResponse(for: query)
 //
 //    print("Commit: \(response)")
-//} else {
+// } else {
 //    print("git diff is empty")
-//}
+// }

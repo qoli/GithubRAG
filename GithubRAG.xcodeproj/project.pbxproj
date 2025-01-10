@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		EA696A2D2D31476D0036113A /* SwiftGit2 in Frameworks */ = {isa = PBXBuildFile; productRef = EA696A2C2D31476D0036113A /* SwiftGit2 */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		EA3EEC8A2D312B780009D47D /* GithubRAG.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GithubRAG.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EA696A2D2D31476D0036113A /* SwiftGit2 in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = GithubRAG;
 			packageProductDependencies = (
+				EA696A2C2D31476D0036113A /* SwiftGit2 */,
 			);
 			productName = GithubRAG;
 			productReference = EA3EEC8A2D312B780009D47D /* GithubRAG.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = EA3EEC812D312B780009D47D;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				EA696A2B2D31476D0036113A /* XCRemoteSwiftPackageReference "SwiftGit2" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EA3EEC8B2D312B780009D47D /* Products */;
 			projectDirPath = "";
@@ -321,6 +330,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		EA696A2B2D31476D0036113A /* XCRemoteSwiftPackageReference "SwiftGit2" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mbernson/SwiftGit2.git";
+			requirement = {
+				branch = "swift-package-manager";
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		EA696A2C2D31476D0036113A /* SwiftGit2 */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EA696A2B2D31476D0036113A /* XCRemoteSwiftPackageReference "SwiftGit2" */;
+			productName = SwiftGit2;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = EA3EEC822D312B780009D47D /* Project object */;
 }
