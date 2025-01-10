@@ -13,7 +13,7 @@ struct GithubRAGApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppContentView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
     }
