@@ -11,7 +11,7 @@ import NaturalLanguage
 import SwiftGit2
 import SwiftUI
 
-class RagGitGenerator: ObservableObject {
+class GitGenerator: ObservableObject {
     let INITIAL_PROMPT = """
        You are a git commit message generator.
        Your task is to help the user write a good commit message.
@@ -152,7 +152,7 @@ class RagGitGenerator: ObservableObject {
     }
 }
 
-extension RagGitGenerator {
+extension GitGenerator {
     func getFileDiff(statusEntry: StatusEntry, repo: Repository) -> String {
         var oldContext: [String] = []
         var newContext: [String] = []

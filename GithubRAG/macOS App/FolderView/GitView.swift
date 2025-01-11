@@ -9,7 +9,7 @@ import SwiftUI
 
 struct GitView: View {
     @State var folderURL: String
-    @StateObject private var rag = RagGitGenerator()
+    @StateObject private var rag = GitGenerator()
 
     @State private var beforeCheck: Int = 0
 
