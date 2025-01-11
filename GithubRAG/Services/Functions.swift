@@ -22,15 +22,12 @@ func requestAccessToFolder(filePath: String, completion: @escaping (URL?) -> Voi
     openPanel.allowsMultipleSelection = false
     openPanel.prompt = "Select Folder"
 
-    print(#function, URL(fileURLWithPath: filePath))
-
     openPanel.directoryURL = URL(fileURLWithPath: filePath)
     openPanel.representedURL = URL(fileURLWithPath: filePath)
 
     openPanel.begin { result in
         if result == .OK, let url = openPanel.url {
             let startAccessingSecurityScopedResource = url.startAccessingSecurityScopedResource()
-            print("startAccessingSecurityScopedResource:", startAccessingSecurityScopedResource)
             completion(url)
         } else {
             completion(nil)
