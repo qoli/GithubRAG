@@ -48,7 +48,7 @@ class RAGHelper: ObservableObject {
     }
 
     @Published var documents: [RagDocument] = []
-    @Published var response: String = "..."
+    @Published var response: String = ""
 
     struct RagDocument: Identifiable {
         var id: UUID
@@ -214,69 +214,25 @@ extension RAGHelper {
 
     func findLineDifferences(between originalText: String, and modifiedText: String) -> String {
         let originalLines = originalText.components(separatedBy: .newlines)
-        let modifiedText = modifiedText.replacingOccurrences(of: "\r\n", with: "\n")
         let modifiedLines = modifiedText.components(separatedBy: .newlines)
+        
         var output = ""
         
-        // Add file headers
-        output += "--- a\n"
-        output += "+++ b\n"
+        let maxLines = max(originalLines.count, modifiedLines.count)
         
-        // Find different chunks
-        var i = 0
-        let contextLines = 3
-        
-        while i < max(originalLines.count, modifiedLines.count) {
-            var diffStart = i
-            var diffLength = 0
-            var foundDiff = false
+        for i in 0..<maxLines {
+            let lineInOriginal = i < originalLines.count ? originalLines[i] : nil
+            let lineInModified = i < modifiedLines.count ? modifiedLines[i] : nil
             
-            // Look for differences
-            while i < min(originalLines.count, modifiedLines.count) {
-                if originalLines[i] != modifiedLines[i] {
-                    if !foundDiff {
-                        diffStart = max(0, i - contextLines)
-                        foundDiff = true
-                    }
-                    diffLength = (i - diffStart) + 1
-                } else if foundDiff {
-                    // Include context lines after diff
-                    diffLength += 1
-                    if diffLength >= contextLines {
-                        break
-                    }
+            if lineInOriginal != lineInModified {
+                if let lineInOriginal = lineInOriginal {
+                    output += "- \(lineInOriginal)\n" // 仅在原始文本中存在的行
                 }
-                i += 1
-            }
-            
-            // If we found differences, output the chunk
-            if foundDiff {
-                let chunkEnd = min(diffStart + diffLength + contextLines, originalLines.count)
-                let originalCount = chunkEnd - diffStart
-                let modifiedCount = chunkEnd - diffStart
-                
-                // Add chunk header
-                output += "@@ -\(diffStart + 1),\(originalCount) +\(diffStart + 1),\(modifiedCount) @@\n"
-                
-                // Output lines with context
-                for j in diffStart..<chunkEnd {
-                    if j < originalLines.count && j < modifiedLines.count {
-                        if originalLines[j] != modifiedLines[j] {
-                            output += "- \(originalLines[j])\n"
-                            output += "+ \(modifiedLines[j])\n"
-                        } else {
-                            output += " \(originalLines[j])\n"
-                        }
-                    } else if j < originalLines.count {
-                        output += "- \(originalLines[j])\n"
-                    } else if j < modifiedLines.count {
-                        output += "+ \(modifiedLines[j])\n"
-                    }
+                if let lineInModified = lineInModified {
+                    output += "+ \(lineInModified)\n" // 仅在修改文本中存在的行
                 }
-                
-                i = chunkEnd
-            } else {
-                i += 1
+            } else if lineInOriginal != nil {
+                output += "  \(lineInOriginal!)\n" // 相同的行
             }
         }
         

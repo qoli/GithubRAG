@@ -20,7 +20,7 @@ struct FolderListView: View {
     var body: some View {
         List {
             ForEach(items) { item in
-                FolderView(item: item)
+                WrapperView(item: item)
             }
             .onDelete(perform: deleteItems)
         }
