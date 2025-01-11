@@ -64,5 +64,5 @@ let parameters: [String: Any] = [
 
 ## 感謝
 
-https://github.com/DonTizi/Swiftrag
-https://github.com/mbernson/SwiftGit2/tree/swift-package-manager
+- https://github.com/DonTizi/Swiftrag
+- https://github.com/mbernson/SwiftGit2/tree/swift-package-manager
