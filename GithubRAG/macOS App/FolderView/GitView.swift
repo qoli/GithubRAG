@@ -5,7 +5,6 @@
 //  Created by 黃佁媛 on 2025/1/11.
 //
 
-import MarkdownView
 import SwiftUI
 
 struct GitView: View {
@@ -14,14 +13,44 @@ struct GitView: View {
 
     @State private var beforeCheck: Int = 0
 
+    @AppStorage("username") private var username: String = ""
+    @AppStorage("email") private var email: String = ""
+
     var body: some View {
         NavigationView {
             List {
                 NavigationLink {
-                    ScrollView(.vertical) {
-                        MarkdownView(text: $rag.response)
-                            .fixedSize(horizontal: true, vertical: true)
+                    Form {
+                        Section {
+                            HStack {
+                                Button("Generate Commit Message") {
+                                    rag.generateCommitMessage()
+                                }
+
+                                Button("Copy") {
+                                    let pasteboard = NSPasteboard.general
+                                    pasteboard.clearContents()
+                                    pasteboard.setString(rag.response, forType: .string)
+                                }
+
+                                Spacer()
+                            }
+                        }
+
+                        Section {
+                            TextEditor(text: $rag.response)
+                                .frame(maxHeight: 300)
+                            TextField("User Name", text: $username)
+                            TextField("Email", text: $email)
+                            Button("Commit") {
+                                rag.commitGit(name: username, email: email)
+                            }
+                        }
+
+                        Spacer()
                     }
+                    .formStyle(.columns)
+                    .padding()
                     .onAppear {
                         if beforeCheck == 0 && beforeCheck != rag.checkCount {
                             rag.generateCommitMessage()
@@ -30,7 +59,7 @@ struct GitView: View {
                     }
                 } label: {
                     VStack(alignment: .leading) {
-                        Text("Query")
+                        Text("Generate Commit Message")
                         Text("Base \(rag.checkCount) selected")
                             .opacity(0.5)
                     }
@@ -42,9 +71,13 @@ struct GitView: View {
 
                     NavigationLink(destination:
 
-                        ScrollView(.vertical) {
-                            Text(doc.document.content)
+                        ZStack(alignment: .topLeading) {
+                            ScrollView(.vertical) {
+                                Text(doc.document.content)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
                         }
+                        .padding()
 
                     ) {
                         VStack(alignment: .leading) {
@@ -67,19 +100,6 @@ struct GitView: View {
                     Button("Get Git Changes") {
                         reset()
                         rag.computeGitChanges()
-                    }
-                }
-                ToolbarItem(placement: .automatic) {
-                    Button("Generate Commit Message") {
-                        rag.generateCommitMessage()
-                    }
-                }
-
-                ToolbarItem(placement: .automatic) {
-                    Button("Copy") {
-                        let pasteboard = NSPasteboard.general
-                        pasteboard.clearContents()
-                        pasteboard.setString(rag.response, forType: .string)
                     }
                 }
                 ToolbarItem(placement: .automatic) {

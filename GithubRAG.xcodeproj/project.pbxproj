@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		EA696A2D2D31476D0036113A /* SwiftGit2 in Frameworks */ = {isa = PBXBuildFile; productRef = EA696A2C2D31476D0036113A /* SwiftGit2 */; };
 		EA696A372D31A13B0036113A /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EA696A362D31A13B0036113A /* Info.plist */; };
-		EA8ECA982D32DFAB00D69CAC /* MarkdownView in Frameworks */ = {isa = PBXBuildFile; productRef = EA8ECA972D32DFAB00D69CAC /* MarkdownView */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,7 +29,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EA8ECA982D32DFAB00D69CAC /* MarkdownView in Frameworks */,
 				EA696A2D2D31476D0036113A /* SwiftGit2 in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -76,7 +74,6 @@
 			name = GithubRAG;
 			packageProductDependencies = (
 				EA696A2C2D31476D0036113A /* SwiftGit2 */,
-				EA8ECA972D32DFAB00D69CAC /* MarkdownView */,
 			);
 			productName = GithubRAG;
 			productReference = EA3EEC8A2D312B780009D47D /* GithubRAG.app */;
@@ -108,7 +105,6 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				EA696A2B2D31476D0036113A /* XCRemoteSwiftPackageReference "SwiftGit2" */,
-				EA8ECA962D32DFAB00D69CAC /* XCRemoteSwiftPackageReference "MarkdownView" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EA3EEC8B2D312B780009D47D /* Products */;
@@ -350,15 +346,6 @@
 				kind = branch;
 			};
 		};
-		EA8ECA962D32DFAB00D69CAC /* XCRemoteSwiftPackageReference "MarkdownView" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/LiYanan2004/MarkdownView.git";
-			requirement = {
-				kind = versionRange;
-				maximumVersion = 2.0.0;
-				minimumVersion = 1.0.0;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -366,11 +353,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = EA696A2B2D31476D0036113A /* XCRemoteSwiftPackageReference "SwiftGit2" */;
 			productName = SwiftGit2;
-		};
-		EA8ECA972D32DFAB00D69CAC /* MarkdownView */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = EA8ECA962D32DFAB00D69CAC /* XCRemoteSwiftPackageReference "MarkdownView" */;
-			productName = MarkdownView;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

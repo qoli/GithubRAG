@@ -1,42 +1,6 @@
 {
-  "originHash" : "3127db0175ab96fd41aaaf1ac634ce952806fa9bc8f50c1e918daa29047da3ec",
+  "originHash" : "4e0f7ed3f05ff0c5d887917b4df97f00f478694e5028ff9e23b6761177f29d61",
   "pins" : [
-    {
-      "identity" : "highlightr",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/raspu/Highlightr.git",
-      "state" : {
-        "revision" : "bcf2d0590f32ac2528feb72d7e34f5b463801a47",
-        "version" : "2.2.1"
-      }
-    },
-    {
-      "identity" : "markdownview",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/LiYanan2004/MarkdownView.git",
-      "state" : {
-        "revision" : "8b746c5146b7842e9547b4d60adb2f1712cebb33",
-        "version" : "1.7.0"
-      }
-    },
-    {
-      "identity" : "swift-cmark",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-cmark.git",
-      "state" : {
-        "revision" : "3ccff77b2dc5b96b77db3da0d68d28068593fa53",
-        "version" : "0.5.0"
-      }
-    },
-    {
-      "identity" : "swift-markdown",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-markdown.git",
-      "state" : {
-        "revision" : "8f79cb175981458a0a27e76cb42fee8e17b1a993",
-        "version" : "0.5.0"
-      }
-    },
     {
       "identity" : "swiftgit2",
       "kind" : "remoteSourceControl",

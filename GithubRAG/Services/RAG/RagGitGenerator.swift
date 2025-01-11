@@ -80,6 +80,8 @@ class RagGitGenerator: ObservableObject {
         }
     }
 
+    var repo: Repository?
+
     func computeGitChanges() {
         requestAccess { git in
 
@@ -89,6 +91,7 @@ class RagGitGenerator: ObservableObject {
                 self.documents.removeAll()
 
                 let repo = try Repository.at(git).get()
+                self.repo = repo
                 let statusEntry = try repo.status().get()
 
                 statusEntry.forEach { statusEntry in
@@ -125,11 +128,28 @@ class RagGitGenerator: ObservableObject {
         self.response = response
     }
 
-    func test() {
-        let ragSystem: RAGSystem = RAGSystem()
-        let response = ragSystem.generateResponse(for: "hi")
-        print("Commit: \(response)")
-        self.response = response
+    func commitGit(name: String, email: String) {
+        guard let repo = repo else { return }
+
+        do {
+            // Get selected documents
+            let selectedDocuments = documents.filter { $0.check }
+
+            // Stage each selected file
+            for doc in selectedDocuments {
+                let path = doc.statusEntry.indexToWorkDir?.newFile?.path ?? ""
+                if !path.isEmpty {
+                    try repo.add(path: path).get()
+                }
+            }
+
+            // Create signature and commit
+            let signature = Signature(name: name, email: email)
+            let result = try repo.commit(message: response, signature: signature).get()
+            print("Successfully committed with OID: \(result)")
+        } catch {
+            print("Failed to commit: \(error)")
+        }
     }
 }
 
