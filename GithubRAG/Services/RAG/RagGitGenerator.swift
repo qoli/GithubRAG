@@ -11,7 +11,7 @@ import NaturalLanguage
 import SwiftGit2
 import SwiftUI
 
-class RAGHelper: ObservableObject {
+class RagGitGenerator: ObservableObject {
     let INITIAL_PROMPT = """
        You are a git commit message generator.
        Your task is to help the user write a good commit message.
@@ -142,7 +142,7 @@ class RAGHelper: ObservableObject {
     }
 }
 
-extension RAGHelper {
+extension RagGitGenerator {
     func buildDocument(statusEntry: StatusEntry, repo: Repository) -> Document {
         var context: String = ""
 

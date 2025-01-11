@@ -10,7 +10,7 @@ import SwiftUI
 
 struct GitView: View {
     @State var folderURL: String
-    @StateObject private var rag = RAGHelper()
+    @StateObject private var rag = RagGitGenerator()
 
     var body: some View {
         NavigationView {
