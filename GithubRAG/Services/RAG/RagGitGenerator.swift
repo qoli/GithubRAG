@@ -107,31 +107,17 @@ class RagGitGenerator: ObservableObject {
     func query() {
         let ragSystem: RAGSystem = RAGSystem()
 
-        let content = documents.filter({ $0.check == true }).map({ $0.document.content }).joined(separator: "\n")
+        let contents = documents.filter({ $0.check == true })
 
-        // Get the app's document directory
-        if let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-            let timestamp = ISO8601DateFormatter().string(from: Date())
-            
-            // Create content file
-            let contentURL = documentDirectory.appendingPathComponent("content_\(timestamp).txt")
-            try? content.write(to: contentURL, atomically: true, encoding: .utf8)
-            print("Content saved to: \(contentURL.path)")
-
-            // Add document to RAG system
-            ragSystem.addDocument(Document(id: "git dff", content: content))
-
-            // Generate and save response
-            let query = INITIAL_PROMPT
-            let response = ragSystem.generateResponse(for: "\(query)")
-            
-            // Create response file
-            let responseURL = documentDirectory.appendingPathComponent("response_\(timestamp).txt")
-            try? response.write(to: responseURL, atomically: true, encoding: .utf8)
-            print("Response saved to: \(responseURL.path)")
-
-            self.response = response
+        contents.forEach { doc in
+            ragSystem.addDocument(doc.document)
         }
+
+        // Generate and save response
+        let query = INITIAL_PROMPT
+        let response = ragSystem.generateResponse(for: "\(query)")
+
+        self.response = response
     }
 
     func test() {
@@ -215,15 +201,15 @@ extension RagGitGenerator {
     func findLineDifferences(between originalText: String, and modifiedText: String) -> String {
         let originalLines = originalText.components(separatedBy: .newlines)
         let modifiedLines = modifiedText.components(separatedBy: .newlines)
-        
+
         var output = ""
-        
+
         let maxLines = max(originalLines.count, modifiedLines.count)
-        
-        for i in 0..<maxLines {
+
+        for i in 0 ..< maxLines {
             let lineInOriginal = i < originalLines.count ? originalLines[i] : nil
             let lineInModified = i < modifiedLines.count ? modifiedLines[i] : nil
-            
+
             if lineInOriginal != lineInModified {
                 if let lineInOriginal = lineInOriginal {
                     output += "- \(lineInOriginal)\n" // 仅在原始文本中存在的行
@@ -235,7 +221,7 @@ extension RagGitGenerator {
                 output += "  \(lineInOriginal!)\n" // 相同的行
             }
         }
-        
+
         return output
     }
 
