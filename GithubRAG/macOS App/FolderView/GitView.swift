@@ -12,6 +12,8 @@ struct GitView: View {
     @State var folderURL: String
     @StateObject private var rag = RagGitGenerator()
 
+    @State private var beforeCheck: Int = 0
+
     var body: some View {
         NavigationView {
             List {
@@ -22,14 +24,15 @@ struct GitView: View {
                     }
                     .scrollContentBackground(.hidden)
                     .onAppear {
-                        if rag.response.isEmpty {
-                            rag.query()
+                        if beforeCheck == 0 && beforeCheck != rag.checkCount {
+                            rag.generateCommitMessage()
+                            beforeCheck = rag.checkCount
                         }
                     }
                 } label: {
                     VStack(alignment: .leading) {
                         Text("Query")
-                        Text("Base " + rag.documents.filter({ $0.check }).count.description + " selected")
+                        Text("Base \(rag.checkCount) selected")
                             .opacity(0.5)
                     }
                 }
@@ -47,7 +50,7 @@ struct GitView: View {
                                 Text(url.description)
                                     .font(.caption2)
                                     .opacity(0.5)
-                                    .lineLimit(2)
+                                    .lineLimit(1)
                                     .truncationMode(.head)
                             }
                         }
@@ -57,23 +60,14 @@ struct GitView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .automatic) {
-                    Button("reset") {
+                    Button("Get Git Changes") {
                         reset()
+                        rag.computeGitChanges()
                     }
                 }
                 ToolbarItem(placement: .automatic) {
-                    Button("diff") {
-                        rag.diff()
-                    }
-                }
-                ToolbarItem(placement: .automatic) {
-                    Button("query") {
-                        rag.query()
-                    }
-                }
-                ToolbarItem(placement: .automatic) {
-                    Button("test") {
-                        rag.test()
+                    Button("Generate Commit Message") {
+                        rag.generateCommitMessage()
                     }
                 }
                 ToolbarItem(placement: .automatic) {
@@ -97,74 +91,9 @@ struct GitView: View {
             }
             .onAppear {
                 reset()
-                rag.diff()
+                rag.computeGitChanges()
             }
         }
-
-//        VStack(alignment: .leading) {
-//            if folderURL != nil {
-//                HStack {
-//                    Button("reset") {
-//                        reset()
-//                    }
-//
-//                    Button("diff") {
-//                        rag.diff()
-//                    }
-//
-//                    Button("query") {
-//                        rag.query()
-//                    }
-//
-//                    Button("test") {
-//                        rag.test()
-//                    }
-//
-//                    Button("Select All") {
-//                        rag.documents = rag.documents.map { doc in
-//                            var modifiedDoc = doc
-//                            modifiedDoc.check = true
-//                            return modifiedDoc
-//                        }
-//                    }
-//
-//                    Button("unSelect All") {
-//                        rag.documents = rag.documents.map { doc in
-//                            var modifiedDoc = doc
-//                            modifiedDoc.check = false
-//                            return modifiedDoc
-//                        }
-//                    }
-//
-//                    Spacer()
-//
-//                    Text(rag.documents.filter({ $0.check }).count.description)
-//                }
-//
-//        HStack {
-//            TextEditor(text: $rag.response)
-//        }
-//
-//                HStack {
-//                    List(rag.documents) { doc in
-//                        let url = URL(filePath: doc.statusEntry.indexToWorkDir?.newFile?.path ?? "")
-//
-//                        if let index = rag.documents.firstIndex(where: { $0.id == doc.id }) {
-//                            Toggle(isOn: $rag.documents[index].check) {
-//                                Text(url.lastPathComponent)
-//                            }
-//
-//                            ListButton(text: url.absoluteString) {
-//                                someCode = doc.document.content
-//                            }
-//                        }
-//                    }
-//
-//                    CodeEditor(source: $someCode, language: .swift, theme: .atelierSavannaDark)
-//                }
-//            }
-//        }
-//        .padding()
     }
 
     func reset() {

@@ -50,6 +50,10 @@ class RagGitGenerator: ObservableObject {
     @Published var documents: [RagDocument] = []
     @Published var response: String = ""
 
+    var checkCount: Int {
+        return documents.filter({ $0.check }).count
+    }
+
     struct RagDocument: Identifiable {
         var id: UUID
         var statusEntry: StatusEntry
@@ -75,7 +79,7 @@ class RagGitGenerator: ObservableObject {
         }
     }
 
-    func diff() {
+    func computeGitChanges() {
         requestAccess { git in
 
             guard let git else { return }
@@ -104,7 +108,7 @@ class RagGitGenerator: ObservableObject {
         }
     }
 
-    func query() {
+    func generateCommitMessage() {
         let ragSystem: RAGSystem = RAGSystem()
 
         let contents = documents.filter({ $0.check == true })
@@ -129,13 +133,45 @@ class RagGitGenerator: ObservableObject {
 }
 
 extension RagGitGenerator {
+    func getFileDiff(statusEntry: StatusEntry, repo: Repository) -> String {
+        var oldContext: [String] = []
+        var newContext: [String] = []
+
+        guard let indexToWorkDir = statusEntry.indexToWorkDir else {
+            return ""
+        }
+
+        if statusEntry.status == .workTreeModified {
+            if let oldFile = indexToWorkDir.oldFile {
+                if let blob = try? repo.blob(oldFile.oid).get(), let thisContext = String(data: blob.data, encoding: .utf8) {
+                    oldContext = thisContext.components(separatedBy: .newlines)
+                }
+            }
+        }
+
+        if let newFile = indexToWorkDir.newFile {
+            let newFileContent = getNewFileContext(newFile: newFile, repo: repo)
+            newContext = newFileContent.components(separatedBy: .newlines)
+        }
+
+        let diff = FileDiffer().compareLines(oldContext, newContext)
+
+        return diff
+    }
+
     func buildDocument(statusEntry: StatusEntry, repo: Repository) -> Document {
         var context: String = ""
 
-        if let pathA = statusEntry.indexToWorkDir?.oldFile?.path, let pathB = statusEntry.indexToWorkDir?.newFile?.path {
-            context += "diff --git a/\(pathA) b/\(pathB)\n"
-        } else if let pathB = statusEntry.indexToWorkDir?.newFile?.path {
-            context += "New File: \(pathB)\n"
+        print("statusEntry.status", statusEntry.status, statusEntry.status.rawValue)
+
+        if statusEntry.status.contains(.indexNew) {
+            if let pathB = statusEntry.indexToWorkDir?.newFile?.path {
+                context += "New File: \(pathB)\n"
+            }
+        } else {
+            if let pathA = statusEntry.indexToWorkDir?.oldFile?.path, let pathB = statusEntry.indexToWorkDir?.newFile?.path {
+                context += "diff --git a/\(pathA) b/\(pathB)\n"
+            }
         }
 
         context += "Status: \(statusEntry.status)\n"
@@ -144,29 +180,16 @@ extension RagGitGenerator {
         if let indexToWorkDir = statusEntry.indexToWorkDir {
             context += "Flags: \(indexToWorkDir.flags)\n"
 
-            var oldContext: String = ""
-            var newContext: String = ""
+            let diff = getFileDiff(statusEntry: statusEntry, repo: repo)
+            context += diff
+        }
 
-            if statusEntry.status == .workTreeModified {
-                if let oldFile = indexToWorkDir.oldFile {
-                    if let blob = try? repo.blob(oldFile.oid).get(), let thisContext = String(data: blob.data, encoding: .utf8) {
-                        oldContext = thisContext
-                    }
-                }
-            }
+        var newContext: [String] = []
 
-            if let newFile = indexToWorkDir.newFile {
-                newContext = getNewFileContext(newFile: newFile, repo: repo)
-
-                if statusEntry.status == .workTreeModified {
-                    let diff = findLineDifferences(between: oldContext, and: newContext)
-                    context += diff
-                } else {
-                    context += newContext
-                }
-            }
-
-            return Document(id: statusEntry.id.uuidString, content: context)
+        if statusEntry.status.contains(.indexNew), let newFile = statusEntry.indexToWorkDir?.newFile {
+            let newFileContent = getNewFileContext(newFile: newFile, repo: repo)
+            newContext = newFileContent.components(separatedBy: .newlines)
+            context += newContext.joined(separator: "\n")
         }
 
         return Document(id: statusEntry.id.uuidString, content: context)
@@ -196,33 +219,6 @@ extension RagGitGenerator {
             print("Error reading file: \(error)")
             return "" // Set empty string if file can't be read
         }
-    }
-
-    func findLineDifferences(between originalText: String, and modifiedText: String) -> String {
-        let originalLines = originalText.components(separatedBy: .newlines)
-        let modifiedLines = modifiedText.components(separatedBy: .newlines)
-
-        var output = ""
-
-        let maxLines = max(originalLines.count, modifiedLines.count)
-
-        for i in 0 ..< maxLines {
-            let lineInOriginal = i < originalLines.count ? originalLines[i] : nil
-            let lineInModified = i < modifiedLines.count ? modifiedLines[i] : nil
-
-            if lineInOriginal != lineInModified {
-                if let lineInOriginal = lineInOriginal {
-                    output += "- \(lineInOriginal)\n" // 仅在原始文本中存在的行
-                }
-                if let lineInModified = lineInModified {
-                    output += "+ \(lineInModified)\n" // 仅在修改文本中存在的行
-                }
-            } else if lineInOriginal != nil {
-                output += "  \(lineInOriginal!)\n" // 相同的行
-            }
-        }
-
-        return output
     }
 
     // Rest of the extension remains the same
