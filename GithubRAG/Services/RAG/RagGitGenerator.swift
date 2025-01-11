@@ -47,12 +47,13 @@ class RagGitGenerator: ObservableObject {
         git_libgit2_shutdown()
     }
 
-    @Published var documents: [RagDocument] = []
     @Published var response: String = ""
 
     var checkCount: Int {
         return documents.filter({ $0.check }).count
     }
+
+    @Published var documents: [RagDocument] = []
 
     struct RagDocument: Identifiable {
         var id: UUID
@@ -161,8 +162,6 @@ extension RagGitGenerator {
 
     func buildDocument(statusEntry: StatusEntry, repo: Repository) -> Document {
         var context: String = ""
-
-        print("statusEntry.status", statusEntry.status, statusEntry.status.rawValue)
 
         if statusEntry.status.contains(.indexNew) {
             if let pathB = statusEntry.indexToWorkDir?.newFile?.path {

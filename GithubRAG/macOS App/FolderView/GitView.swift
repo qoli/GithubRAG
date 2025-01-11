@@ -5,7 +5,7 @@
 //  Created by 黃佁媛 on 2025/1/11.
 //
 
-import CodeEditor
+import MarkdownView
 import SwiftUI
 
 struct GitView: View {
@@ -18,11 +18,10 @@ struct GitView: View {
         NavigationView {
             List {
                 NavigationLink {
-                    ZStack {
-                        TextEditor(text: $rag.response)
-                            .padding()
+                    ScrollView(.vertical) {
+                        MarkdownView(text: $rag.response)
+                            .fixedSize(horizontal: true, vertical: true)
                     }
-                    .scrollContentBackground(.hidden)
                     .onAppear {
                         if beforeCheck == 0 && beforeCheck != rag.checkCount {
                             rag.generateCommitMessage()
@@ -38,21 +37,26 @@ struct GitView: View {
                 }
 
                 ForEach(rag.documents) { doc in
-                    NavigationLink(destination: CodeEditor(source: doc.document.content, language: .swift, theme: .atelierSavannaDark)) {
+                    let url = URL(filePath: doc.statusEntry.indexToWorkDir?.newFile?.path ?? "")
+                    let index = rag.documents.firstIndex(where: { $0.id == doc.id })
+
+                    NavigationLink(destination:
+
+                        ScrollView(.vertical) {
+                            Text(doc.document.content)
+                        }
+
+                    ) {
                         VStack(alignment: .leading) {
-                            let url = URL(filePath: doc.statusEntry.indexToWorkDir?.newFile?.path ?? "")
-
-                            if let index = rag.documents.firstIndex(where: { $0.id == doc.id }) {
-                                Toggle(isOn: $rag.documents[index].check) {
-                                    Text(url.lastPathComponent)
-                                }
-
-                                Text(url.description)
-                                    .font(.caption2)
-                                    .opacity(0.5)
-                                    .lineLimit(1)
-                                    .truncationMode(.head)
+                            Toggle(isOn: $rag.documents[index ?? 0].check) {
+                                Text(url.lastPathComponent)
                             }
+
+                            Text(url.description)
+                                .font(.caption2)
+                                .opacity(0.5)
+                                .lineLimit(1)
+                                .truncationMode(.head)
                         }
                         .padding(.vertical, 8)
                     }
@@ -68,6 +72,14 @@ struct GitView: View {
                 ToolbarItem(placement: .automatic) {
                     Button("Generate Commit Message") {
                         rag.generateCommitMessage()
+                    }
+                }
+
+                ToolbarItem(placement: .automatic) {
+                    Button("Copy") {
+                        let pasteboard = NSPasteboard.general
+                        pasteboard.clearContents()
+                        pasteboard.setString(rag.response, forType: .string)
                     }
                 }
                 ToolbarItem(placement: .automatic) {
