@@ -4,6 +4,8 @@ This is a RAG Agent project based on Ollama, designed to read git diff logs and 
 
 The project utilizes SwiftUI and SwiftGit2, and file access complies with App Sandbox requirements.
 
+![appImage](https://raw.githubusercontent.com/qoli/RAG_Commit_Agent/refs/heads/main/assets/SCR-20250112-dgdc.jpeg)
+
 ## Usage Instructions
 
 1. Ensure that you have installed Ollama and downloaded the `llama3.2:latest` model.
