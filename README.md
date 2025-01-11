@@ -61,3 +61,8 @@ let parameters: [String: Any] = [
 
 4. 選擇 Query
    那麼就會和 llama 通信並生成 Git Commit 信息
+
+## 感謝
+
+https://github.com/DonTizi/Swiftrag
+https://github.com/mbernson/SwiftGit2/tree/swift-package-manager
