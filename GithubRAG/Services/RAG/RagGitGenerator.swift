@@ -48,12 +48,11 @@ class RagGitGenerator: ObservableObject {
     }
 
     @Published var response: String = ""
+    @Published var documents: [RagDocument] = []
 
     var checkCount: Int {
         return documents.filter({ $0.check }).count
     }
-
-    @Published var documents: [RagDocument] = []
 
     struct RagDocument: Identifiable {
         var id: UUID

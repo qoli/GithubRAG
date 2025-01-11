@@ -60,10 +60,10 @@ class FileDiffer {
             case added
             case removed
         }
-        
+
         let type: LineType
         let content: String
-        
+
         func toString() -> String {
             switch type {
             case .same: return "  \(content)"
@@ -73,54 +73,46 @@ class FileDiffer {
         }
     }
 
-    // New method to process diff lines with context
+    // Modified processDiffWithContext method to only show relevant changes
     private func processDiffWithContext(_ diffLines: [DiffLine], contextLines: Int = 3) -> String {
         var result = ""
-        var currentBlock: [DiffLine] = []
-        var lastPrintedIndex = -1
+        var lastChangeIndex = -1
+        var hasAddedEllipsis = false
         
         for i in 0..<diffLines.count {
             let line = diffLines[i]
             
             if line.type != .same {
-                // Calculate the start and end indices for context
-                let startIdx = max(0, i - contextLines)
-                let endIdx = min(diffLines.count - 1, i + contextLines)
-                
-                // If this is a new block (not continuous with the previous one)
-                if startIdx > lastPrintedIndex + 1 {
-                    // Print the current block if it's not empty
-                    if !currentBlock.isEmpty {
-                        result += currentBlock.map { $0.toString() }.joined(separator: "\n") + "\n"
-                        if endIdx < diffLines.count - 1 {
-                            result += "...\n"
-                        }
+                // Found a change, print context before if needed
+                if lastChangeIndex == -1 || i > lastChangeIndex + (contextLines * 2) {
+                    // Add ellipsis between separate change blocks
+                    if lastChangeIndex != -1 {
+                        result += "...\n"
                     }
-                    currentBlock = []
-                }
-                
-                // Add context lines and the changed line
-                if startIdx > lastPrintedIndex + 1 {
-                    // Add preceding context
-                    for j in startIdx..<i {
-                        currentBlock.append(diffLines[j])
+                    
+                    // Print preceding context
+                    let contextStart = max(0, i - contextLines)
+                    for j in contextStart..<i {
+                        result += diffLines[j].toString() + "\n"
                     }
                 }
-                currentBlock.append(line)
-                lastPrintedIndex = i
-            } else if lastPrintedIndex >= 0 && i <= lastPrintedIndex + contextLines {
-                // Add following context lines
-                currentBlock.append(line)
-                lastPrintedIndex = i
+                
+                // Print the changed line
+                result += line.toString() + "\n"
+                
+                // Update last change position
+                lastChangeIndex = i
+                hasAddedEllipsis = false
+            } else if lastChangeIndex != -1 && i <= lastChangeIndex + contextLines {
+                // Print following context lines
+                result += line.toString() + "\n"
+            } else if lastChangeIndex != -1 && i > lastChangeIndex + contextLines && !hasAddedEllipsis {
+                result += "...\n"
+                hasAddedEllipsis = true
             }
         }
         
-        // Print the last block
-        if !currentBlock.isEmpty {
-            result += currentBlock.map { $0.toString() }.joined(separator: "\n")
-        }
-        
-        return result
+        return result.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     // Previous readFile method remains the same
