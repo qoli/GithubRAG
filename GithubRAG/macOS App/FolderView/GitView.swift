@@ -40,7 +40,7 @@ struct GitView: View {
                         Section {
                             TextEditor(text: $rag.response)
                                 .frame(maxHeight: 300)
-                            TextField("User Name", text: $username)
+                            TextField("Name", text: $username)
                             TextField("Email", text: $email)
                             Button("Commit") {
                                 rag.commitGit(name: username, email: email)
