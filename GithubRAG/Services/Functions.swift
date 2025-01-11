@@ -28,6 +28,7 @@ func requestAccessToFolder(filePath: String, completion: @escaping (URL?) -> Voi
     openPanel.begin { result in
         if result == .OK, let url = openPanel.url {
             _ = url.startAccessingSecurityScopedResource()
+            
             completion(url)
         } else {
             completion(nil)
