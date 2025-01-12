@@ -39,13 +39,20 @@ class RAGSystem {
         documents.append(document)
     }
 
-    func searchRelevantDocuments(for query: String, limit: Int = 50) -> [Document] {
+    func searchRelevantDocuments(for query: String, limit: Int = 5) -> [Document] {
         let queryEmbedding = getEmbedding(for: query)
         let sortedDocuments = documents.sorted { doc1, doc2 in
             guard let emb1 = doc1.embedding, let emb2 = doc2.embedding else { return false }
             return cosineSimilarity(queryEmbedding, emb1) > cosineSimilarity(queryEmbedding, emb2)
         }
-        return Array(sortedDocuments.prefix(limit))
+
+        let docs = Array(sortedDocuments.prefix(limit))
+
+        docs.forEach { doc in
+            print(#function, doc.id)
+        }
+
+        return docs
     }
 
     func generateResponse(for query: String) -> String {
@@ -72,6 +79,9 @@ class RAGSystem {
             "model": "llama3.2:latest",
             "prompt": prompt,
             "stream": false,
+            "options": [
+                "temperature": 0.2,
+            ],
         ]
 
         request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
