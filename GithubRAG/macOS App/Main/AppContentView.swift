@@ -21,7 +21,3 @@ struct AppContentView: View {
         }
     }
 }
-
-#Preview {
-    AppContentView().environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
-}
